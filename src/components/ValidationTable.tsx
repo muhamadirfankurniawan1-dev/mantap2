@@ -10,20 +10,33 @@ interface ValidationTableProps {
 export default function ValidationTable({ results, vlan }: ValidationTableProps) {
   const allowedCount = results.filter(r => r.status === 'allowed').length;
   const notAllowedCount = results.filter(r => r.status === 'not_allowed').length;
+  const activeEndpointCount = results.filter(r => r.hasActiveEndpoint).length;
+  const totalPathsInMoquery = results.filter(r => r.isVlanAllowed).length;
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap">
         <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-green-600" />
           <span className="text-sm font-medium text-green-900">
-            {allowedCount} Allowed
+            {allowedCount} Allowed Paths
           </span>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center gap-2">
           <XCircle className="w-5 h-5 text-red-600" />
           <span className="text-sm font-medium text-red-900">
             {notAllowedCount} Not Allowed
+          </span>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-blue-600" />
+          <span className="text-sm font-medium text-blue-900">
+            {activeEndpointCount} Active Endpoints
+          </span>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+          <span className="text-sm font-medium text-slate-700">
+            Total Paths in Moquery: {totalPathsInMoquery}
           </span>
         </div>
       </div>
@@ -58,8 +71,17 @@ export default function ValidationTable({ results, vlan }: ValidationTableProps)
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span className="text-sm text-slate-700">Yes</span>
+                      {result.hasActiveEndpoint ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span className="text-sm text-slate-700">Yes</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm text-slate-500">No</span>
+                        </>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">

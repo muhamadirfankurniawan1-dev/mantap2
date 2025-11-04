@@ -229,7 +229,7 @@ export function validateVlanAllowances(
 ): ValidationResult[] {
   const results: ValidationResult[] = [];
 
-  // Buat Set dari path yang ada di moquery dengan VLAN yang sesuai
+  // Buat map dari path yang ada di moquery dengan VLAN yang sesuai
   const filteredAttachments = pathAttachments.filter(att => att.vlan === endpointData.vlan);
   const allowedPathsMap = new Map<string, PathAttachment>();
 
@@ -237,18 +237,36 @@ export function validateVlanAllowances(
     allowedPathsMap.set(normalizePathName(att.path), att);
   });
 
-  // Validasi setiap path dari endpoint
-  for (const path of endpointData.paths) {
-    const normalizedPath = normalizePathName(path);
-    // Path dianggap "allowed" jika ada di kedua input (endpoint DAN moquery)
-    const isAllowed = allowedPathsMap.has(normalizedPath);
+  // Buat map dari path endpoint untuk cek active endpoint
+  const endpointPathsMap = new Map<string, boolean>();
+  endpointData.paths.forEach(path => {
+    endpointPathsMap.set(normalizePathName(path), true);
+  });
+
+  // Iterasi SEMUA path dari moquery untuk VLAN ini
+  for (const attachment of filteredAttachments) {
+    const normalizedPath = normalizePathName(attachment.path);
+    const hasActiveEndpoint = endpointPathsMap.has(normalizedPath);
 
     results.push({
-      path,
-      hasActiveEndpoint: true,
-      isVlanAllowed: isAllowed,
-      status: isAllowed ? 'allowed' : 'not_allowed'
+      path: attachment.path,
+      hasActiveEndpoint,
+      isVlanAllowed: true, // Semua path dari moquery adalah allowed
+      status: 'allowed'
     });
+  }
+
+  // Tambahkan path dari endpoint yang TIDAK ada di moquery (not allowed)
+  for (const path of endpointData.paths) {
+    const normalizedPath = normalizePathName(path);
+    if (!allowedPathsMap.has(normalizedPath)) {
+      results.push({
+        path,
+        hasActiveEndpoint: true,
+        isVlanAllowed: false,
+        status: 'not_allowed'
+      });
+    }
   }
 
   return results;
